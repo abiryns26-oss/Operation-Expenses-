@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل المصروفات التشغيلية</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .summary-box {
+            background: #e8f4fd;
+            border-right: 5px solid #3498db;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2980b9;
+        }
+        .settings-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .action-btns button {
+            background-color: #34495e;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 5px;
+            transition: 0.2s;
+        }
+        .action-btns button:hover {
+            background-color: #2c3e50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer-total-sentence {
+            background-color: #fdfefe;
+            border: 2px dashed #cbd5e1;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: right;
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        input, select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .add-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .add-btn:hover {
+            background-color: #219653;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* إعدادات الطباعة */
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .form-group, .action-btns, .settings-box, .delete-btn, th:last-child, td:last-child {
+                display: none !important;
+            }
+            table {
+                border: 1px solid #333;
+            }
+            th, td {
+                border: 1px solid #333;
+                color: #000;
+            }
+            th {
+                background-color: #eee !important;
+                color: #000;
+                -webkit-print-color-adjust: exact;
+            }
+            .footer-total-sentence {
+                border: 1px solid #333;
+                background-color: #fff !important;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>سجل المصروفات التشغيلية</h2>
+    
+    <div class="header-actions">
+        <div class="summary-box">
+            إجمالي المصروفات: <span id="total-amount-top">0</span> <span class="currency-label">ليرة سورية</span>
+        </div>
+        
+        <!-- اختيار العملة -->
+        <div class="settings-box">
+            <label for="currency-select">💱 العملة:</label>
+            <select id="currency-select" onchange="updateCurrency()">
+                <option value="ليرة سورية">ليرة سورية</option>
+                <option value="دولار أمريكي">دولار أمريكي ($)</option>
+            </select>
+        </div>
+
+        <div class="action-btns">
+            <button onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+            <button onclick="clearAllData()" style="background-color: #c0392b;">🗑️ مسح الكل</button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <input type="date" id="exp-date">
+        <input type="text" id="exp-name" placeholder="بند المصروف (مثل: كهرباء)">
+        <select id="exp-category">
+            <option value="تشغيلي">تشغيلي</option>
+            <option value="صيانة">صيانة</option>
+            <option value="رواتب">رواتب</option>
+            <option value="أخرى">أخرى</option>
+        </select>
+        <input type="number" id="exp-cost" placeholder="المبلغ">
+        <button class="add-btn" onclick="addExpense()">إضافة مصروف</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>التاريخ</th>
+                <th>البند</th>
+                <th>الفئة</th>
+                <th>المبلغ</th>
+                <th>الإجراء</th>
+            </tr>
+        </thead>
+        <tbody id="expense-table-body">
+            <!-- البيانات تُحمّل هنا تلقائياً -->
+        </tbody>
+    </table>
+
+    <!-- جملة إجمالي المصروفات أسفل الجدول -->
+    <div class="footer-total-sentence">
+        مجموع المصروفات التشغيلية الكلية حتى تاريخه هو: <span id="total-amount-bottom">0</span> <span class="currency-label">ليرة سورية</span> لا غير.
+    </div>
+</div>
+
+<script>
+    document.getElementById('exp-date').valueAsDate = new Date();
+
+    let expenses = JSON.parse(localStorage.getItem('operational_expenses')) || [];
+    let currentCurrency = localStorage.getItem('operational_currency') || 'ليرة سورية';
+    
+    // ضبط اختيار العملة عند التحميل إذا كان مخزناً
+    document.getElementById('currency-select').value = currentCurrency;
+
+    function renderTable() {
+        const tableBody = document.getElementById('expense-table-body');
+        tableBody.innerHTML = '';
+        let total = 0;
+
+        expenses.forEach((item, index) => {
+            total += item.cost;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.date}</td>
+                <td>${item.name}</td>
+                <td>${item.category}</td>
+                <td>${item.cost.toLocaleString()}</td>
+                <td><button class="delete-btn" onclick="deleteExpense(${index})">حذف</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        const formattedTotal = total.toLocaleString();
+        document.getElementById('total-amount-top').innerText = formattedTotal;
+        document.getElementById('total-amount-bottom').innerText = formattedTotal;
+        
+        // تحديث جميع النصوص التي تعرض اسم العملة
+        const currencyLabels = document.querySelectorAll('.currency-label');
+        currencyLabels.forEach(el => el.innerText = currentCurrency);
+    }
+
+    function updateCurrency() {
+        currentCurrency = document.getElementById('currency-select').value;
+        localStorage.setItem('operational_currency', currentCurrency);
+        
+        // تحديث النصوص فوراً
+        const currencyLabels = document.querySelectorAll('.currency-label');
+        currencyLabels.forEach(el => el.innerText = currentCurrency);
+    }
+
+    function addExpense() {
+        const date = document.getElementById('exp-date').value;
+        const name = document.getElementById('exp-name').value;
+        const category = document.getElementById('exp-category').value;
+        const cost = parseFloat(document.getElementById('exp-cost').value);
+
+        if (!date || !name || isNaN(cost) || cost <= 0) {
+            alert('الرجاء إدخال كافة البيانات بشكل صحيح!');
+            return;
+        }
+
+        expenses.push({ date, name, category, cost });
+        localStorage.setItem('operational_expenses', JSON.stringify(expenses));
+
+        renderTable();
+
+        document.getElementById('exp-name').value = '';
+        document.getElementById('exp-cost').value = '';
+    }
+
+    function deleteExpense(index) {
+        if (confirm('هل أنت متأكد من حذف هذا السجل؟')) {
+            expenses.splice(index, 1);
+            localStorage.setItem('operational_expenses', JSON.stringify(expenses));
+            renderTable();
+        }
+    }
+
+    function clearAllData() {
+        if (confirm('تحذير: هل تريد مسح كافة السجلات نهائياً؟')) {
+            expenses = [];
+            localStorage.removeItem('operational_expenses');
+            renderTable();
+        }
+    }
+
+    window.onload = renderTable;
+</script>
+
+</body>
+</html>
